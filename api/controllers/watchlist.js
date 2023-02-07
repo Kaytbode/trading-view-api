@@ -11,7 +11,19 @@ const addAsset = async (req, res) => {
 
     await pool.query(text, values);
 
-    res.json({operation: 'asset successfully added to database'});
+    res.json({operation: `${asset} successfully added to watchlist`});
+    res.end();
+}
+
+const removeAsset = async (req, res) => {
+    const { asset } = req.params;
+
+    const text = 'DELETE FROM watchlist WHERE asset = ($1) RETURNING *';
+    const values = [asset];
+
+    await pool.query(text, values);
+
+    res.json({operation: `${asset} successfully removed from watchlist`});
     res.end();
 }
 
@@ -47,4 +59,4 @@ const addAsset = async (req, res) => {
   });*/
 })();
 
-module.exports = { addAsset };
+module.exports = { addAsset, removeAsset };
