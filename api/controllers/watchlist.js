@@ -1,8 +1,19 @@
 const Binance = require('node-binance-api');
+const { pool } = require('../database/index');
 
 const binance = new Binance().options();
 
+const addAsset = async (req, res) => {
+    const { asset } = req.params;
 
+    const text = 'INSERT INTO watchlist(asset) VALUES($1) RETURNING *';
+    const values = [asset];
+
+    await pool.query(text, values);
+
+    res.json({operation: 'asset successfully added to database'});
+    res.end();
+}
 
 (async function (){
     //const ticks = await binance.candlesticks('BNBBTC', '1s', ()=>{}, {limit: 2, endTime: Date.now()});
@@ -35,3 +46,5 @@ const binance = new Binance().options();
     //console.info(symbol+" last price: "+last)
   });*/
 })();
+
+module.exports = { addAsset };
