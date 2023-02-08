@@ -4,11 +4,16 @@ const { changeAnalysis } = require('../helper/indicator');
 const { sortAssets } = require('../helper/sort');
 const { calculatePulseandShift, calculateShift, 
         calculateHAandMomentumOutput } = require('../helper/pulseshift');
+const { regex, regexSort, validate } = require('../utils/validation');
 
 const binance = new Binance().options();
 
 const addAsset = async (req, res) => {
     const { asset } = req.params;
+
+    if (!regex.test(asset)){
+        throw new Error('Wrong Asset Name')
+    }
 
     const text = 'INSERT INTO watchlist(asset) VALUES($1) RETURNING *';
     const values = [asset];
@@ -21,6 +26,10 @@ const addAsset = async (req, res) => {
 
 const removeAsset = async (req, res) => {
     const { asset } = req.params;
+
+    if (!regex.test(asset)){
+        throw new Error('Wrong Asset Name')
+    }
 
     const text = 'DELETE FROM watchlist WHERE asset = ($1) RETURNING *';
     const values = [asset];
@@ -35,39 +44,59 @@ const getAllAssets = async (req, res) => {
     const { pulse, shift, wltf } = req.query;
     const { sort } = req.params;
 
-    const text = 'SELECT asset FROM watchlist';
+    if (!regexSort.test(sort)){
+        throw new Error('Specify a number from 1 - 4');
+    }
 
+    if (!regex.test(wltf)){
+        throw new Error('watch timeframe format not correct');
+    }
+
+    if ((!Array.isArray(pulse)) || 
+        (!Array.isArray(shift)) ||
+        (!pulse.every(validate)) ||
+        (!shift.every(validate))){
+        throw new Error('Refer to the docs on how to specify pulse and shift values');
+    }
+
+    const text = 'SELECT asset FROM watchlist';
     // Get all assets from database
     const { rows } = await pool.query(text)
 
     const assets = rows.map(({asset})=> asset);
 
-    const data =[], specialTfs = {'12h': 2, '1d' : 3, '3d' : 7, '1w' : 15, '1M' : 61};
+    const data =[], specialShiftTfs = {'12h': 2, '1d' : 3, '3d' : 7, '1w' : 15, '1M' : 61};
+
+    // Intervals: 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
 
     assets.forEach(async (asset, idx, arr) => {
         // Get the last 500 1-minute candles for each asset
-        const ticks = await binance.candlesticks(asset, '1m');
+        const oneMinuteTicks = await binance.candlesticks(asset, '1m');
+        // Get the last 500 30-min candles for each asset
+        const thirtyMinutesTicks = await binance.candlesticks(asset, '30m');
         // Get the last 500 12-hr candles for each asset
-        const specialTicks = await binance.candlesticks(asset, '12h');
+        const twelveHoursTicks = await binance.candlesticks(asset, '12h');
+        // Get the last 500 1-week candles for each asset
+        const oneWeekTicks = await binance.candlesticks(asset, '1w');
 
-        const len = ticks.length, speciaLen = specialTicks.length;
+        const len1 = oneMinuteTicks.length, len12 = twelveHoursTicks.length;
 
-        const recentTick = ticks[len - 1];
+        const recentTick = oneMinuteTicks[len1 - 1];
 
         const storeCA = [], storeAsset = {name: asset};
 
         let sum = 0;
-
+        
         shift.forEach(val => {
             let i, shiftTick;
-
-            if (!specialTfs.hasOwnProperty(val)) {
-                i = len - val;
-                shiftTick = ticks[i];
+            
+            if (!specialShiftTfs.hasOwnProperty(val)) {
+                i = len1 - (+val);
+                shiftTick = oneMinuteTicks[i];
             } 
             else  {
-                i = speciaLen - specialTfs[val];
-                shiftTick = specialTicks[i];
+                i = len12 - specialShiftTfs[val];
+                shiftTick = twelveHoursTicks[i];
             }
             // calculate the change analysis 
             const ca = changeAnalysis(recentTick[4], shiftTick[4]);
@@ -84,9 +113,33 @@ const getAllAssets = async (req, res) => {
         let pulseValue = 0;
 
         pulse.every(async val => {
-            const ticks = await binance.candlesticks(asset, val);
+            let ticks, divisor;
+            val = +val;
 
-            const output = calculateHAandMomentumOutput(ticks);
+            if (val < 30 ) {
+                ticks = oneMinuteTicks;
+                divisor = 1;
+            }
+            else if (val >= 30 && val <= 600 ) {
+                ticks = thirtyMinutesTicks;
+                divisor = 30
+            }
+            else if (val >= 720 && val <= 8640){
+                ticks = twelveHoursTicks;
+                divisor = 720;
+            } 
+            else if (val >= 10080 && val <= 241920) {
+                ticks = oneWeekTicks;
+                divisor = 10080;
+            }
+            else {
+                throw new Error('timeframe not supported');
+            }
+
+            const i1 = 500 - ((val/divisor) * 2);
+            const i19 = 500 - ((val/divisor) * 20);
+
+            const output = calculateHAandMomentumOutput(recentTick, ticks[i1], ticks[i19]);
 
             if (output == -2 && pulseValue == -2) pulseValue = -2;
         
@@ -110,19 +163,19 @@ const getAllAssets = async (req, res) => {
         if (wltf) {
             let i, shiftTick;
 
-            if (!specialTfs.hasOwnProperty(val)) {
-                i = len - val;
-                shiftTick = ticks[i];
+            if (!specialShiftTfs.hasOwnProperty(wltf)) {
+                i = len1 - wltf;
+                shiftTick = oneMinuteTicks[i];
             } 
             else  {
-                i = speciaLen - specialTfs[val];
-                shiftTick = specialTicks[i];
+                i = len12 - specialShiftTfs[wltf];
+                shiftTick = twelveHoursTicks[i];
             }
 
             wlCA = changeAnalysis(recentTick[4], shiftTick[4]);
         }
 
-        storeAsset.wltf = wlCA || storeData.average;
+        storeAsset.wltf = wlCA || storeAsset.average;
 
         data.push(storeAsset);
 
@@ -131,7 +184,7 @@ const getAllAssets = async (req, res) => {
                 const sortedData = sortAssets(data, sort);
                 res.json({ data : sortedData });
                 res.end();
-            }, 1000);
+            }, 2000);
         }
     });
 

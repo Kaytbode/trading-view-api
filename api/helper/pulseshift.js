@@ -46,12 +46,7 @@ const calculatePulseandShift = (pulse, shift)=> {
     return score;
 }
 
-const calculateHAandMomentumOutput = (pArr) => {
-    const len = pArr.length;
-    const p = pArr[len - 1];
-    const p1 = pArr[len - 2];
-    const p19 = pArr[19];
-  
+const calculateHAandMomentumOutput = (p, p1, p19) => {
     const { hOpen, hClose } = helkinAshi(p, p1);
     const mom = momentum(p[4], p19[4]);
   
