@@ -17,6 +17,8 @@ const calculateHAM = async (req, res) => {
         throw new Error('timeframe format is wrong');
     }
 
+    console.log(asset, tf);
+    
     const oneMinuteTicks = await binance.candlesticks(asset, '1m');
     // Get the last 500 30-min candles for each asset
     const thirtyMinutesTicks = await binance.candlesticks(asset, '30m');
@@ -31,7 +33,7 @@ const calculateHAM = async (req, res) => {
     console.log(thirtyMinutesTicks[499]);
     console.log(twelveHoursTicks[499]);
     console.log(oneWeekTicks[499]);
-    
+
     const data = {price: recentTick[4]};
 
     tf.forEach(val => {
