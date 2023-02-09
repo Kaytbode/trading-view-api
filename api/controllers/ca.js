@@ -19,9 +19,10 @@ const calculateCA = async (req, res) => {
 
     const specialShiftTfs = {'12h': 2, '1d' : 3, '3d' : 7, '1w' : 15, '1M' : 61};
 
-    const oneMinuteTicks = await binance.candlesticks(asset, '1m');
-
-    const twelveHoursTicks = await binance.candlesticks(asset, '12h');
+    const [oneMinuteTicks, twelveHoursTicks ] = await Promise.all([
+           binance.candlesticks(asset, '1m'),
+           binance.candlesticks(asset, '12h')
+        ]);
 
     const len1 = oneMinuteTicks.length, len12 = twelveHoursTicks.length;
 

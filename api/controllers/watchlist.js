@@ -70,15 +70,14 @@ const getAllAssets = async (req, res) => {
     // Intervals supported by Binance API: 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
 
     assets.forEach(async (asset, idx, arr) => {
-        // Get the last 500 1-minute candles for each asset
-        const oneMinuteTicks = await binance.candlesticks(asset, '1m');
-        // Get the last 500 30-min candles for each asset
-        const thirtyMinutesTicks = await binance.candlesticks(asset, '30m');
-        // Get the last 500 12-hr candles for each asset
-        const twelveHoursTicks = await binance.candlesticks(asset, '12h');
-        // Get the last 500 1-week candles for each asset
-        const oneWeekTicks = await binance.candlesticks(asset, '1w');
-
+        const [oneMinuteTicks, thirtyMinutesTicks,
+               twelveHoursTicks, oneWeekTicks ] = await Promise.all([
+               binance.candlesticks(asset, '1m'),
+               binance.candlesticks(asset, '30m'),
+               binance.candlesticks(asset, '12h'),
+               binance.candlesticks(asset, '1w')
+            ]);
+        
         const len1 = oneMinuteTicks.length, len12 = twelveHoursTicks.length;
 
         const recentTick = oneMinuteTicks[len1 - 1];
