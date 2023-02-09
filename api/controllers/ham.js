@@ -32,7 +32,7 @@ const calculateHAM = async (req, res) => {
       let ticks, divisor;
       val = +val;
 
-      if (val < 30 ) {
+      if (val >= 1 && val <= 25) {
           ticks = oneMinuteTicks;
           divisor = 1;
       }
