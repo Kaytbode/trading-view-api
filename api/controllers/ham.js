@@ -26,6 +26,12 @@ const calculateHAM = async (req, res) => {
     const oneWeekTicks = await binance.candlesticks(asset, '1w');
 
     const recentTick = oneMinuteTicks[oneMinuteTicks.length - 1];
+
+    console.log(oneMinuteTicks[499]);
+    console.log(thirtyMinutesTicks[499]);
+    console.log(twelveHoursTicks[499]);
+    console.log(oneWeekTicks[499]);
+    
     const data = {price: recentTick[4]};
 
     tf.forEach(val => {
