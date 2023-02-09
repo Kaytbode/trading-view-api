@@ -24,13 +24,8 @@ const calculateHAM = async (req, res) => {
               binance.candlesticks(asset, '12h'),
               binance.candlesticks(asset, '1w')
            ]);
-    console.log('hey');
-    const recentTick = oneMinuteTicks[oneMinuteTicks.length - 1];
 
-       console.log(oneMinuteTicks[499]);
-       console.log(thirtyMinutesTicks[499]);
-       console.log(twelveHoursTicks[499]);
-       console.log(oneWeekTicks[499]);
+    const recentTick = oneMinuteTicks[oneMinuteTicks.length - 1];
 
     const data = {price: recentTick[4]};
 
