@@ -67,7 +67,7 @@ const getAllAssets = async (req, res) => {
 
     const data =[], specialShiftTfs = {'12h': 2, '1d' : 3, '3d' : 7, '1w' : 15, '1M' : 61};
 
-    // Intervals: 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
+    // Intervals supported by Binance API: 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
 
     assets.forEach(async (asset, idx, arr) => {
         // Get the last 500 1-minute candles for each asset
@@ -112,7 +112,7 @@ const getAllAssets = async (req, res) => {
         // calculate pulse values
         let pulseValue = 0;
 
-        pulse.every(async val => {
+        pulse.every(val => {
             let ticks, divisor;
             val = +val;
 
