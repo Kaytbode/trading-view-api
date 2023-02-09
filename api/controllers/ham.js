@@ -16,7 +16,7 @@ const calculateHAM = async (req, res) => {
         (!tf.every(validate))){
         throw new Error('timeframe format is wrong');
     }
-    console.info(await binance.candlesticks(asset, '5m'));
+    
     const [oneMinuteTicks, thirtyMinutesTicks,
            twelveHoursTicks, oneWeekTicks ] = await Promise.all([
               binance.candlesticks(asset, '1m'),
@@ -24,7 +24,7 @@ const calculateHAM = async (req, res) => {
               binance.candlesticks(asset, '12h'),
               binance.candlesticks(asset, '1w')
            ]);
-
+    console.log('hey');
     const recentTick = oneMinuteTicks[oneMinuteTicks.length - 1];
 
        console.log(oneMinuteTicks[499]);
