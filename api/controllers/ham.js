@@ -16,6 +16,8 @@ const calculateHAM = async (req, res) => {
         (!tf.every(validate))){
         throw new Error('timeframe format is wrong');
     }
+
+    console.log(binance);
     
     const [oneMinuteTicks, thirtyMinutesTicks,
            twelveHoursTicks, oneWeekTicks ] = await Promise.all([
