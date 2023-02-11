@@ -5,8 +5,10 @@ const { regex, validate } = require('../utils/validation');
 const binance = Binance();
 
 const calculateCA = async (req, res) => {
-    const { asset } = req.params;
+    let { asset } = req.params;
     const { tf } = req.query;
+
+    asset = asset.toUpperCase();
 
     if (!regex.test(asset)){
         throw new Error('Wrong Asset Name')
