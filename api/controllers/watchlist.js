@@ -1,4 +1,4 @@
-const Binance = require('node-binance-api');
+const Binance = require('binance-api-node').default;
 const { pool } = require('../database/index');
 const { changeAnalysis } = require('../helper/indicator');
 const { sortAssets } = require('../helper/sort');
@@ -6,7 +6,7 @@ const { calculatePulseandShift, calculateShift,
         calculateHAandMomentumOutput } = require('../helper/pulseshift');
 const { regex, regexSort, validate } = require('../utils/validation');
 
-const binance = new Binance().options();
+const binance = Binance();
 
 const addAsset = async (req, res) => {
     const { asset } = req.params;
@@ -72,10 +72,10 @@ const getAllAssets = async (req, res) => {
     assets.forEach(async (asset, idx, arr) => {
         const [oneMinuteTicks, thirtyMinutesTicks,
                twelveHoursTicks, oneWeekTicks ] = await Promise.all([
-               binance.candlesticks(asset, '1m'),
-               binance.candlesticks(asset, '30m'),
-               binance.candlesticks(asset, '12h'),
-               binance.candlesticks(asset, '1w')
+                binance.candles({ symbol: asset, interval: '1m' }),
+                binance.candles({ symbol: asset, interval: '30m' }),
+                binance.candles({ symbol: asset, interval: '12h' }),
+                binance.candles({ symbol: asset, interval: '1w' })
             ]);
         
         const len1 = oneMinuteTicks.length, len12 = twelveHoursTicks.length;
@@ -98,7 +98,7 @@ const getAllAssets = async (req, res) => {
                 shiftTick = twelveHoursTicks[i];
             }
             // calculate the change analysis 
-            const ca = changeAnalysis(recentTick[4], shiftTick[4]);
+            const ca = changeAnalysis(recentTick.close, shiftTick.close);
             storeCA.push(ca);
 
             sum+=ca;
@@ -171,7 +171,7 @@ const getAllAssets = async (req, res) => {
                 shiftTick = twelveHoursTicks[i];
             }
 
-            wlCA = changeAnalysis(recentTick[4], shiftTick[4]);
+            wlCA = changeAnalysis(recentTick.close, shiftTick.close);
         }
 
         storeAsset.wltf = wlCA || storeAsset.average;

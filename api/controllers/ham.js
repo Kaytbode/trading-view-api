@@ -1,8 +1,8 @@
-const Binance = require('node-binance-api');
+const Binance = require('binance-api-node').default;
 const {  calculateHAandMomentumOutput } = require('../helper/pulseshift');
 const { regex, validate } = require('../utils/validation');
 
-const binance = new Binance().options();
+const binance = Binance();
 
 const calculateHAM = async (req, res) => {
     const { asset } = req.params;
@@ -16,18 +16,18 @@ const calculateHAM = async (req, res) => {
         (!tf.every(validate))){
         throw new Error('timeframe format is wrong');
     }
-
+    // 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
     const [oneMinuteTicks, thirtyMinutesTicks,
-           twelveHoursTicks, oneWeekTicks ] = await Promise.all([
-              binance.candlesticks(asset, '1m'),
-             // binance.candlesticks(asset, '30m'),
-            //  binance.candlesticks(asset, '12h'),
-            //  binance.candlesticks(asset, '1w')
+          twelveHoursTicks, oneWeekTicks ] = await Promise.all([
+             binance.candles({ symbol: asset, interval: '1m' }),
+             binance.candles({ symbol: asset, interval: '30m' }),
+             binance.candles({ symbol: asset, interval: '12h' }),
+             binance.candles({ symbol: asset, interval: '1w' })
            ]);
 
     const recentTick = oneMinuteTicks[oneMinuteTicks.length - 1];
 
-    const data = {price: recentTick[4]};
+    const data = {price: recentTick.close};
 
     tf.forEach(val => {
       let ticks, divisor;

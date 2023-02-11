@@ -1,10 +1,10 @@
 const helkinAshi = (p, p1) => {
-  const open = +p[1], max = +p[2], min = +p[3], close = +p[4];
+  const { open, close, high, low } = p;
 
-  const prevOpen = +p1[1], prevClose = +p1[4];
+  const prevOpen = +p1.open, prevClose = +p1.close;
   
   const hOpen = 0.5 * (prevOpen + prevClose);
-  const hClose = 0.25 * (open + max + min + close);
+  const hClose = 0.25 * (open + high + low + close);
   
   return { hOpen, hClose };
 }

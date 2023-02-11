@@ -1,8 +1,8 @@
-const Binance = require('node-binance-api');
+const Binance = require('binance-api-node').default;
 const { changeAnalysis } = require('../helper/indicator');
 const { regex, validate } = require('../utils/validation');
 
-const binance = new Binance().options();
+const binance = Binance();
 
 const calculateCA = async (req, res) => {
     const { asset } = req.params;
@@ -20,14 +20,15 @@ const calculateCA = async (req, res) => {
     const specialShiftTfs = {'12h': 2, '1d' : 3, '3d' : 7, '1w' : 15, '1M' : 61};
 
     const [oneMinuteTicks, twelveHoursTicks ] = await Promise.all([
-           binance.candlesticks(asset, '1m'),
-           binance.candlesticks(asset, '12h')
+            binance.candles({ symbol: asset, interval: '1m' }),
+            binance.candles({ symbol: asset, interval: '12h' }),
         ]);
 
     const len1 = oneMinuteTicks.length, len12 = twelveHoursTicks.length;
 
     const recentTick = oneMinuteTicks[len1 - 1];
-
+    
+    // console.log(oneMinuteTicks[400], twelveHoursTicks[400])
     const data = {};
     let sum = 0;
 
@@ -43,7 +44,7 @@ const calculateCA = async (req, res) => {
             shiftTick = twelveHoursTicks[i];
         }
         // calculate the change analysis 
-        const ca = changeAnalysis(recentTick[4], shiftTick[4]);
+        const ca = changeAnalysis(recentTick.close, shiftTick.close);
 
         sum+=ca;
 
