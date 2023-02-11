@@ -17,14 +17,12 @@ const calculateHAM = async (req, res) => {
         throw new Error('timeframe format is wrong');
     }
 
-    console.log(binance);
-    
     const [oneMinuteTicks, thirtyMinutesTicks,
            twelveHoursTicks, oneWeekTicks ] = await Promise.all([
               binance.candlesticks(asset, '1m'),
-              binance.candlesticks(asset, '30m'),
-              binance.candlesticks(asset, '12h'),
-              binance.candlesticks(asset, '1w')
+             // binance.candlesticks(asset, '30m'),
+            //  binance.candlesticks(asset, '12h'),
+            //  binance.candlesticks(asset, '1w')
            ]);
 
     const recentTick = oneMinuteTicks[oneMinuteTicks.length - 1];
