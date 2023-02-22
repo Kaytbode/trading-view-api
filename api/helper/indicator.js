@@ -15,4 +15,12 @@ const changeAnalysis = (cp, pp) => {
   return ((cp - pp)/pp) * 100;
 }
 
-module.exports = { helkinAshi, momentum, changeAnalysis };
+const riseAndFall = (cp, low, high) => {
+  const rise = ((cp - low)/low) * 100;
+
+  const fall = ((cp - high)/high) * 100;
+
+  return { rise, fall };
+}
+
+module.exports = { helkinAshi, momentum, changeAnalysis, riseAndFall };

@@ -69,6 +69,9 @@ const getAllAssets = async (req, res) => {
 
     // Intervals supported by Binance API: 1m,3m,5m,15m,30m,1h,2h,4h,6h,8h,12h,1d,3d,1w,1M
 
+    // average of shift values for all watchlist assets
+    let wltfAverage = 0;
+
     assets.forEach(async (asset, idx, arr) => {
         asset = asset.toUpperCase();
         
@@ -177,10 +180,13 @@ const getAllAssets = async (req, res) => {
         }
 
         storeAsset.wltf = wlCA || storeAsset.average;
+        wltfAverage+=wlCA;
 
         data.push(storeAsset);
 
         if (idx === (arr.length - 1)){
+            data.push({totalAverage: (wltfAverage/arr.length)});
+
             setTimeout(() => {
                 const sortedData = sortAssets(data, sort);
                 res.json({ data : sortedData });
@@ -188,7 +194,6 @@ const getAllAssets = async (req, res) => {
             }, 2000);
         }
     });
-
 }
 
 module.exports = { addAsset, removeAsset, getAllAssets };

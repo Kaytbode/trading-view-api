@@ -2,6 +2,7 @@ const express = require('express');
 const { addAsset, removeAsset, getAllAssets } = require('../controllers/watchlist');
 const { calculateHAM } = require('../controllers/ham');
 const { calculateCA} = require('../controllers/ca');
+const { calculateRF } = require('../controllers/rf');
 
 const router = express.Router();
 
@@ -18,5 +19,7 @@ router.get('/api/watchlist/:sort', getAllAssets);
 router.get('/api/ham/:asset', calculateHAM);
 
 router.get('/api/ca/:asset', calculateCA);
+
+router.get('/api/rf/:asset', calculateRF);
 
 module.exports = router;
