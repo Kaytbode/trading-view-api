@@ -8,7 +8,7 @@ const helkinAshi = (p, p1) => {
   
   return { hOpen, hClose };
 }
-  
+
 const momentum = (cp, pp) => cp - pp;
 
 const changeAnalysis = (cp, pp) => {
@@ -16,9 +16,9 @@ const changeAnalysis = (cp, pp) => {
 }
 
 const riseAndFall = (cp, low, high) => {
-  const rise = ((cp - low)/low) * 100;
+  const rise = ((cp - low)/(low)) * 100;
 
-  const fall = ((cp - high)/high) * 100;
+  const fall = ((cp - high)/(high)) * 100;
 
   return { rise, fall };
 }

@@ -1,6 +1,7 @@
 const Binance = require('binance-api-node').default;
 const {  calculateHAandMomentumOutput } = require('../helper/pulseshift');
 const { regex, validate } = require('../utils/validation');
+const { handleResults } = require('../helper/handle');
 
 const binance = Binance();
 
@@ -19,13 +20,15 @@ const calculateHAM = async (req, res) => {
         throw new Error('timeframe format is wrong');
     }
     // 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
+    const results = await Promise.allSettled([
+        binance.candles({ symbol: asset, interval: '1m' }),
+        binance.candles({ symbol: asset, interval: '30m' }),
+        binance.candles({ symbol: asset, interval: '12h' }),
+        binance.candles({ symbol: asset, interval: '1w' })
+    ]);
+
     const [oneMinuteTicks, thirtyMinutesTicks,
-          twelveHoursTicks, oneWeekTicks ] = await Promise.all([
-             binance.candles({ symbol: asset, interval: '1m' }),
-             binance.candles({ symbol: asset, interval: '30m' }),
-             binance.candles({ symbol: asset, interval: '12h' }),
-             binance.candles({ symbol: asset, interval: '1w' })
-           ]);
+       twelveHoursTicks, oneWeekTicks ] = handleResults(results);
 
     const recentTick = oneMinuteTicks[oneMinuteTicks.length - 1];
 

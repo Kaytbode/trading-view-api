@@ -5,6 +5,7 @@ const { sortAssets } = require('../helper/sort');
 const { calculatePulseandShift, calculateShift, 
         calculateHAandMomentumOutput } = require('../helper/pulseshift');
 const { regex, regexSort, validate } = require('../utils/validation');
+const { handleResults, handle } = require('../helper/handle');
 
 const binance = Binance();
 
@@ -18,9 +19,13 @@ const addAsset = async (req, res) => {
     const text = 'INSERT INTO watchlist(asset) VALUES($1) RETURNING *';
     const values = [asset];
 
-    await pool.query(text, values);
+    const [ error, value ] = await handle(pool.query(text, values));
 
-    res.json({operation: `${asset} successfully added to watchlist`});
+    if (error) {
+        throw new Error ('Asset could not be added to database');
+    }
+
+    res.json({operation: `${value} successfully added to watchlist`});
     res.end();
 }
 
@@ -34,9 +39,13 @@ const removeAsset = async (req, res) => {
     const text = 'DELETE FROM watchlist WHERE asset = ($1) RETURNING *';
     const values = [asset];
 
-    await pool.query(text, values);
+    const [ error, value ] = await handle(pool.query(text, values));
 
-    res.json({operation: `${asset} successfully removed from watchlist`});
+    if (error) {
+        throw new Error ('Asset could not be deleted from database');
+    }
+
+    res.json({operation: `${value} successfully removed from watchlist`});
     res.end();
 }
 
@@ -61,7 +70,11 @@ const getAllAssets = async (req, res) => {
 
     const text = 'SELECT asset FROM watchlist';
     // Get all assets from database
-    const { rows } = await pool.query(text)
+    const [error, { rows }] = await handle(pool.query(text));
+
+    if (error) {
+        throw new Error('Could not retrieve assets from database');
+    }
 
     const assets = rows.map(({asset})=> asset);
 
@@ -75,19 +88,21 @@ const getAllAssets = async (req, res) => {
     assets.forEach(async (asset, idx, arr) => {
         asset = asset.toUpperCase();
         
-        const [oneMinuteTicks, thirtyMinutesTicks,
-               twelveHoursTicks, oneWeekTicks ] = await Promise.all([
+        const results = await Promise.allSettled([
                 binance.candles({ symbol: asset, interval: '1m' }),
                 binance.candles({ symbol: asset, interval: '30m' }),
                 binance.candles({ symbol: asset, interval: '12h' }),
                 binance.candles({ symbol: asset, interval: '1w' })
             ]);
         
+        const [oneMinuteTicks, thirtyMinutesTicks,
+               twelveHoursTicks, oneWeekTicks ] = handleResults(results);
+        
         const len1 = oneMinuteTicks.length, len12 = twelveHoursTicks.length;
 
         const recentTick = oneMinuteTicks[len1 - 1];
 
-        const storeCA = [], storeAsset = {name: asset};
+        const storeCA = [], storeAsset = {name: asset, price: recentTick.close};
 
         let sum = 0;
         

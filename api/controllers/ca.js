@@ -1,6 +1,7 @@
 const Binance = require('binance-api-node').default;
 const { changeAnalysis } = require('../helper/indicator');
 const { regex, validate } = require('../utils/validation');
+const { handleResults } = require('../helper/handle');
 
 const binance = Binance();
 
@@ -21,10 +22,13 @@ const calculateCA = async (req, res) => {
 
     const specialShiftTfs = {'12h': 2, '1d' : 3, '3d' : 7, '1w' : 15, '1M' : 61};
 
-    const [oneMinuteTicks, twelveHoursTicks ] = await Promise.all([
+    const results = await Promise.allSettled([
             binance.candles({ symbol: asset, interval: '1m' }),
             binance.candles({ symbol: asset, interval: '12h' }),
         ]);
+    
+
+    const [oneMinuteTicks, twelveHoursTicks] = handleResults(results)
 
     const len1 = oneMinuteTicks.length, len12 = twelveHoursTicks.length;
 
